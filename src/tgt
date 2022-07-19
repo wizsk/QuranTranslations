@@ -1,0 +1,7 @@
+#! /bin/bash
+
+for i in {1..114}
+do
+	[ $(sed -n ${i}p lineF | cut -d " " -f 2 ) = $(sed -n ${i}p actual-lineF | cut -d " " -f 2) ] && echo ok $i || echo -e "\nline $i\n"
+	 # echo $(sed -n ${i}p lineF ) $(sed -n ${i}p actual-lineF)
+done

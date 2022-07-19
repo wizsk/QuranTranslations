@@ -1,0 +1,17 @@
+#! /bin/bash
+i=$1
+echo "Downlading surah no $i"
+curl -s "https://api.quran.com/api/v4/quran/translations/131?chapter_number=${i}" | jq "." | grep "\"text\":" | sed "s/<sup.*<\/sup>//g ; s/\"//g ; s/:\ /:/" | cut -d ":" -f 2 > "${i}-no-surah.t.txt"
+
+j=1
+
+while read line
+do
+	echo "$j: $line" >>  ${i}-no-surah.txt
+	# echo "$j $line" | wc -l
+	j=$((j+1))
+done < ${i}-no-surah.t.txt
+rm ${i}-no-surah.t.txt		
+wc -l ${i}-no-surah.txt		
+
+	
