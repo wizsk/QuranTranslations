@@ -1,0 +1,44 @@
+#! /bin/bash
+
+for i in {2..2}
+do
+	curl -s "https://api.quran.com/api/v4/quran/translations/131?chapter_number=${i}" |
+		jq "." |
+		grep "\"text\":" |
+		sed "s/:\ /:/" |
+		cut -d ":" -f 2 |
+		sed 's/^"// ; s/"$//' > "${i}-no-surah.t.txt"
+
+	j=1
+	while read line
+	do
+		if [ ! -z "$( echo "$line" | grep -Eo "<sup foot_note=[0-9]*>[0-9]*</sup>" | head -1 )" ]
+		then
+			echo "$line" | grep -Eo "<sup foot_note=[0-9]*>[0-9]*</sup>" > ${i}-no-surah-${j}-no-line.f.t.txt
+				
+			echo "$line" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g'
+
+			while read foot
+			do
+				footnoteF="$(curl -s "https://api.qurancdn.com/api/qdc/foot_notes/$(echo "$foot" | cut -d '=' -f 2 | cut -d '>' -f 1)" |
+					jq "." |
+					grep "text\":" |
+					sed 's/"text":\ "<div><p>\ //; s/<\/p><\/div>",//')"
+
+				footnoteN="$( echo "$foot" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g')"
+				echo "$footnoteN $footnoteF" >> ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt
+
+			done < ${i}-no-surah-${j}-no-line.f.t.txt
+
+			rm ${i}-no-surah-${j}-no-line.f.t.txt
+		fi
+
+		# echo "$j: $line" >>  ${i}-no-surah.txt
+		j=$((j+1))
+	done < ${i}-no-surah.t.txt
+	
+	# rm ${i}-no-surah.t.txt
+	# echo "download ${i}-no-surah and line count is:$(wc -l ${i}-no-surah.txt)"
+done
+
+
