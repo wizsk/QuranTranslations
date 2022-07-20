@@ -1,5 +1,10 @@
 #! /bin/bash
 
+# Colors
+yl='\033[1;93m'     # Yellow
+cf='\033[0m'       # Text Reset
+
+
 for i in {1..114}
 do
 	curl -s "https://api.quran.com/api/v4/quran/translations/131?chapter_number=${i}" |
@@ -10,32 +15,41 @@ do
 		sed 's/^"// ; s/"$//' > "${i}-no-surah.t.txt"
 
 	j=1
+	ayaLines="$( cat "${i}-no-surah.t.txt" | wc -l )"
+
 	while read line
 	do
+		echo -en "$(($j-1)) aya done out of $ayaLines surah no $i\r"
 		if [ ! -z "$( echo "$line" | grep -Eo "<sup foot_note=[0-9]*>[0-9]*</sup>" | head -1 )" ]
 		then
 			echo "$line" | grep -Eo "<sup foot_note=[0-9]*>[0-9]*</sup>" > ${i}-no-surah-${j}-no-line.f.t.txt
 				
-			# echo "$line" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g'
-
 			while read foot
 			do
 				footnoteF="$(curl -s "https://api.qurancdn.com/api/qdc/foot_notes/$(echo "$foot" | cut -d '=' -f 2 | cut -d '>' -f 1)" |
 					jq "." |
 					grep "text\":" |
-					sed 's/"text":\ "<div><p>\ //; s/<\/p><\/div>",//; s/^\s\+//')"
+					sed 's/"text":\ //' |
+					sed 's/"<div><p>\ //g ; s/<\/p><\/div>",//g ; s/^\s\+//' |
+					sed 's/<p>//g ; s/<\/p>//g' |
+					sed 's/<div>//g; s/<\/div>//g' |
+					sed 's/"text":\ "<div><p>//; s/"text":\ "<p>//' |
+					sed 's/<br>/\n\t/g; s/<\/p><\/div>",//' |
+					sed 's/<a\ href=\\"\/[0-9]*:[0-9]*\\">/\[/g ; s/<a\ href=\\"\/[0-9]*:[0-9]*-[0-9]*\\">/\[/g ; s/<\/a>/\]/g' |
+					sed 's/<sup>/\[/g ; s/<\/sup>/\]/g')"
 
 				footnoteN="$( echo "$foot" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g')"
 				echo -e "\t$footnoteN $footnoteF" >> ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt
 
 			done < ${i}-no-surah-${j}-no-line.f.t.txt
 		
-			echo -e "$j: $(echo "$line" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g')\n$(cat ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt )" >> ${i}-no-surah.txt
+			[ "$j" -gt 1 ] && echo -e "\n$j: $(echo "$line" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g')\n$(cat ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt )" >> ${i}-no-surah.txt || echo -e "$j: $(echo "$line" | sed 's/<sup\ foot_note=[0-9]*>/\[/g; s/<\/sup>/\]/g')\n$(cat ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt )" >> ${i}-no-surah.txt
 
 			rm ${i}-no-surah-${j}-no-line.f.t.txt ${i}-no-surah-${j}-no-line-formatted.footnote.t.txt
 		
 		else
-		echo "$j: $line" >>  ${i}-no-surah.txt
+
+		[ "$j" -gt 1 ] && echo -e "\n$j: $line" >>  ${i}-no-surah.txt ||  echo "$j: $line" >>  ${i}-no-surah.txt
 
 		fi
 
@@ -44,6 +58,6 @@ do
 	
 	rm ${i}-no-surah.t.txt
 	
-	echo "download ${i}-no-surah"
+	echo -e "$j aya done out of $ayaLines ${yl}surah no $i Downlaoded!${cf}"
 done
 

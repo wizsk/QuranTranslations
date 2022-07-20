@@ -1,0 +1,18 @@
+#! /bin/bash
+
+# Colors
+yl='\033[1;93m'     # Yellow
+cf='\033[0m'       # Text Reset
+mkdir name
+
+for i in {1..114}
+do
+	surah="$( sed -n ${i}p chapters_A_E | sed 's/\s\+\[/\ \ /g ; s/\]//g ; s/-\+/\ /g' )"
+	
+	echo -e "$(sed -n ${i}p chapters_A_E)\n\n" > "name/${i}-${surah}"
+
+	cat ${i}-no-surah.txt >> "name/${i}-${surah}"
+
+
+done
+

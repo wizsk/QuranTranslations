@@ -1,0 +1,12 @@
+#! /bin/bash
+
+# Colors
+yl='\033[1;93m'     # Yellow
+cf='\033[0m'       # Text Reset
+
+for i in {1..114}
+do
+	echo "$(sed -n ${i}p chapters) [$(sed -n ${i}p chapters-eng)]"
+
+done
+
